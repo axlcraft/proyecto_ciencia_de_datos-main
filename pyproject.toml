@@ -30,4 +30,11 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+# 'tareas/' contiene cuadernos anteriores que se conservan como referencia, no se editan.
+extend-exclude = ["tareas"]
+
+[tool.ruff.lint.per-file-ignores]
+# La guía exige módulos con prefijo numérico (flows/00_ingestion.py, ...);
+# se importan con importlib y no se pueden renombrar.
+"flows/[0-9]*.py" = ["N999"]
 

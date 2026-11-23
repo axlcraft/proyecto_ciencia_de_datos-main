@@ -1,6 +1,6 @@
 # Validación externa y deriva — cohorte sin etiqueta
 
-**Generado:** 2026-11-23T06:31:58.674365+00:00 · **Comando:** `make validar-externa`
+**Generado:** 2026-11-23T06:40:41.189620+00:00 · **Comando:** `make validar-externa`
 
 ## Alcance (leer antes que las cifras)
 

@@ -1,5 +1,5 @@
 {
-  "generado_at": "2026-11-23T06:31:58.674365+00:00",
+  "generado_at": "2026-11-23T06:40:41.189620+00:00",
   "tipo": "validacion_externa_no_supervisada",
   "advertencia": "Sin etiquetas en la cohorte externa: no se calculan metricas de desempeno.",
   "fuente": "data/bronze/titanic_unlabeled.csv",

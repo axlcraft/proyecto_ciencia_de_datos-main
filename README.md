@@ -23,8 +23,10 @@ make pipeline
 ```
 
 `make pipeline` ejecuta en orden: ingesta a Bronze, ingeniería de datos a Silver, agregaciones
-a Gold y entrenamiento/guardado del modelo. Los artefactos generados quedan en `data/`, `models/`
-y `reports/` (ignorados por Git).
+a Gold y entrenamiento/guardado del modelo. Los derivados ignorados por Git son `data/` y `models/`;
+en `reports/` se versionan los informes, las figuras, los cuadernos ejecutados y el artefacto de
+prueba, según `.gitignore`. En un clon limpio `make pipeline` ya encuentra la evaluación congelada:
+`make holdout` solo se ejecuta deliberadamente si se quiere generar una evaluación nueva.
 
 ## Comandos
 

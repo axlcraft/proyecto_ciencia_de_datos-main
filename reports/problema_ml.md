@@ -1,7 +1,8 @@
 # Formulación del problema de ML y selección de modelos
 
 Cuaderno: `notebooks/04_modelado.ipynb`. Código productivo: `flows/05_ml_models.py`.
-**La evaluación final sobre prueba se ejecutó una sola vez**, después de congelar todas las decisiones.
+**La evaluación final sobre prueba se ejecutó una sola vez** (`make holdout`), después de congelar
+todas las decisiones; el resultado está en `reports/evaluacion_prueba.json`.
 
 ## 1. Decisión del problema (Paso 39)
 
@@ -103,7 +104,9 @@ Todas estas decisiones se tomaron mirando **solo** entrenamiento/validación; `X
 ## 6. Evaluación final sobre prueba (Pasos 62–63) — una sola vez
 
 Con las decisiones ya congeladas: `train_final` entrena con los 712 de entrenamiento y se evalúa una vez
-en los 179 de prueba. **No se volvió atrás para ajustar nada tras ver estas cifras.**
+en los 179 de prueba. **No se volvió atrás para ajustar nada tras ver estas cifras.** La corrida quedó
+congelada en `evaluacion_prueba.json`: ni `make pipeline` ni los informes la repiten, y un cambio de
+datos o decisiones produce un error explícito en lugar de una nueva medición silenciosa.
 
 | Modelo | ROC-AUC | Exactitud |
 |---|---|---|
@@ -127,8 +130,9 @@ Precisión 0,800, recall 0,696, F1 0,744 (n = 179). Intervalos por bootstrap per
 
 ## 8. Reproducibilidad
 
-`make pipeline` regenera Bronze, Silver, Gold y el modelo con semilla 42. La ficha del artefacto está en
-`reports/model_card.md`; los metadatos exactos, en `models/titanic_model_v1.metadata.json`.
+`make holdout` congela la evaluación única en `reports/evaluacion_prueba.json`; `make pipeline`
+regenera Bronze, Silver, Gold y el modelo con semilla 42, leyendo ese artefacto. La ficha del artefacto
+está en `reports/model_card.md`; los metadatos exactos, en `models/titanic_model_v1.metadata.json`.
 
 ## 9. Evidencia gráfica y monitoreo posterior
 

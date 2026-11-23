@@ -10,6 +10,7 @@ models/
 reports/*
 !reports/*.md
 !reports/validacion_externa.json
+!reports/evaluacion_prueba.json
 !reports/figuras/
 !reports/figuras/*.png
 !reports/ejecutados/

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import platform
 from collections.abc import Callable
@@ -195,9 +196,10 @@ def get_param_grids() -> dict[str, dict]:
 
 
 def evaluate_on_test(pipeline, X_test: pd.DataFrame, y_test: pd.Series,
-                     threshold: float = 0.5) -> dict:
+                     threshold: float = 0.5, proba: np.ndarray | None = None) -> dict:
     """Devuelve métricas de prueba (dict serializable a JSON)."""
-    proba = pipeline.predict_proba(X_test)[:, 1]
+    if proba is None:
+        proba = pipeline.predict_proba(X_test)[:, 1]
     pred = (proba >= threshold).astype(int)
     return {
         "accuracy": float(accuracy_score(y_test, pred)),
@@ -207,6 +209,25 @@ def evaluate_on_test(pipeline, X_test: pd.DataFrame, y_test: pd.Series,
         "roc_auc": float(roc_auc_score(y_test, proba)),
         "n_test": len(y_test),
     }
+
+
+def evaluate_test_with_ci(pipeline, X_test: pd.DataFrame, y_test: pd.Series,
+                          threshold: float = THRESHOLD) -> tuple[dict, np.ndarray]:
+    """Métricas finales con IC bootstrap y las probabilidades de prueba.
+
+    Solo `flows/08_holdout_evaluation.py` llama a esta función durante la
+    evaluación única; el resto del proyecto consume el artefacto resultante.
+    """
+    proba = pipeline.predict_proba(X_test)[:, 1]
+    metrics = evaluate_on_test(pipeline, X_test, y_test, threshold, proba=proba)
+    metrics["roc_auc_ci95"] = bootstrap_ci(
+        y_test, proba, roc_auc_score, random_state=settings.random_state
+    )
+    metrics["accuracy_ci95"] = bootstrap_ci(
+        y_test, (proba >= threshold).astype(int), accuracy_score,
+        random_state=settings.random_state,
+    )
+    return metrics, proba
 
 
 def bootstrap_ci(
@@ -282,24 +303,25 @@ def predict(pipeline: Pipeline, X: pd.DataFrame, threshold: float = THRESHOLD) -
     })
 
 
-def run(in_dir: Path | None = None, models_dir: Path = MODELS) -> Path:
-    """Silver -> evaluación honesta -> modelo final entrenado y guardado."""
+def run(
+    in_dir: Path | None = None, models_dir: Path = MODELS, holdout_path: Path | None = None,
+) -> Path:
+    """Silver -> métrica congelada -> modelo final entrenado y guardado.
+
+    La evaluación de los 179 pasajeros la hace una sola vez
+    `flows/08_holdout_evaluation.py`. Aquí solo se lee y se verifica: entrenar
+    o registrar el modelo nunca reabre el conjunto de prueba.
+    """
     data_path = (Path(in_dir) / SILVER_NAME) if in_dir else SILVER / SILVER_NAME
     X, y = load_dataset(data_path)
-    X_tr, X_te, y_tr, y_te = split(X, y)
+    data_sha = sha256_of(data_path)
 
-    # Evaluación: la estimación que se reporta. El conjunto de prueba se abre una sola vez.
-    pipe_eval = train_final(X_tr, y_tr)
-    metrics = evaluate_on_test(pipe_eval, X_te, y_te, THRESHOLD)
-    proba = pipe_eval.predict_proba(X_te)[:, 1]
-    metrics["roc_auc_ci95"] = bootstrap_ci(
-        y_te, proba, roc_auc_score, random_state=settings.random_state
+    holdout = importlib.import_module("flows.08_holdout_evaluation").load_holdout(
+        path=holdout_path, data_sha256=data_sha
     )
-    metrics["accuracy_ci95"] = bootstrap_ci(
-        y_te, (proba >= THRESHOLD).astype(int), accuracy_score,
-        random_state=settings.random_state,
-    )
-    log.info("Prueba (una vez): %s", metrics)
+    metrics = holdout["metricas"]
+    log.info("Prueba congelada (%s, una sola evaluación): %s",
+             holdout["generado_at"], metrics)
 
     # Modelo definitivo: se reentrena con TODOS los datos etiquetados.
     pipeline = train_final(X, y)
@@ -312,7 +334,8 @@ def run(in_dir: Path | None = None, models_dir: Path = MODELS) -> Path:
         "threshold": THRESHOLD,
         "random_state": settings.random_state,
         "n_train": len(X),
-        "data_sha256": sha256_of(data_path),
+        "data_sha256": data_sha,
+        "holdout_sha256": holdout["integridad_sha256"],
         "metrics": metrics,
     }
     return save_model(pipeline, metadata, models_dir=models_dir)

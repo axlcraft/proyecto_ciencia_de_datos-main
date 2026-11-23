@@ -37,7 +37,8 @@ así. Tampoco es un modelo clínico, financiero ni de seguridad.
 ## Métricas
 
 Validación = media de 5 pliegues estratificados sobre los 712 de entrenamiento. Prueba = **una sola
-evaluación** sobre 179 pasajeros, con intervalos bootstrap percentil (1.000 réplicas).
+evaluación** sobre 179 pasajeros, con intervalos bootstrap percentil (1.000 réplicas), congelada en
+`reports/evaluacion_prueba.json` (huella de integridad verificada por las demás etapas).
 
 | Métrica | Validación (CV) | Prueba (una vez) | IC 95 % prueba |
 |---|---|---|---|
@@ -80,8 +81,9 @@ Los resultados en niños se basan en 66 personas (intervalos anchos).
 ```bash
 make install      # dependencias (requirements.lock.txt)
 make test && make lint
-make pipeline     # Bronze -> Silver -> Gold -> models/titanic_model_v1.joblib
-make train        # solo reentrenamiento
+make holdout      # única evaluación de los 179 -> reports/evaluacion_prueba.json (versionado)
+make pipeline     # Bronze -> Silver -> Gold -> models/titanic_model_v1.joblib (lee el holdout)
+make train        # solo reentrenamiento (lee el holdout)
 ```
 
 Python 3.14.4 · scikit-learn 1.9.1 · pandas 3.1.1 · semilla 42.
@@ -94,8 +96,9 @@ Prueba de humo (Paso 69): 418 pasajeros sin etiqueta predicen sin NaN ni errores
 
 La cohorte de 418 pasajeros sin etiqueta se puntúa de nuevo con el artefacto guardado en
 [`validacion_externa.md`](validacion_externa.md), que documenta la deriva de covariables y de
-probabilidades (PSI, KS, TVD) frente a los datos de entrenamiento. **No reporta accuracy ni AUC**:
-sin etiquetas no existen aciertos que medir, y la métrica de prueba de esta ficha no se recalcula.
+probabilidades (PSI, KS, TVD) frente a los datos de entrenamiento. La referencia de «prueba honesta»
+es la distribución congelada en `evaluacion_prueba.json`, no un reentrenamiento. **No reporta
+accuracy ni AUC**: sin etiquetas no existen aciertos que medir, y la métrica de prueba no se recalcula.
 Las figuras de ROC/PR, calibración y confusión sobre predicciones OOF están en
 [`validacion_grafica.md`](validacion_grafica.md). Todo se regenera con `make informes`.
 

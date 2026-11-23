@@ -1,6 +1,6 @@
 # Validación externa y deriva — cohorte sin etiqueta
 
-**Generado:** 2026-11-23T06:40:41.189620+00:00 · **Comando:** `make validar-externa`
+**Generado:** 2026-11-23T06:53:14.647910+00:00 · **Comando:** `make validar-externa`
 
 ## Alcance (leer antes que las cifras)
 
@@ -8,7 +8,7 @@ Se cargan los **418 pasajeros sin etiqueta** de `data/bronze/titanic_unlabeled.c
 
 > **No hay validación de desempeño.** Al no existir `Survived` en esta cohorte no se puede calcular exactitud, recall ni ROC-AUC, y **no** se reabre la métrica de prueba. Lo que sigue es *monitorización de deriva*: ¿se parece la cohorte nueva a la de entrenamiento en sus entradas y en las predicciones?
 
-Referencia: 891 pasajeros etiquetados de Silver. Las probabilidades de «prueba honesta» vienen de un modelo reentrenado con 712 pasajeros y evaluado en los 179 de prueba (sin retoques). La columna «in-sample» usa el modelo definitivo sobre los 891 y es optimista: solo contexto.
+Referencia: 891 pasajeros etiquetados de Silver. Las probabilidades de «prueba honesta» están **congeladas** en `evaluacion_prueba.json` (evaluación única sobre 712 entrenamiento y 179 prueba, hecha por `make holdout`); este informe no las recalcula ni reabre la métrica final. La columna «in-sample» usa el modelo definitivo sobre los 891 y es optimista: solo contexto.
 
 ## Variables numéricas
 

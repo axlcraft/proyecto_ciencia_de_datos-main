@@ -1960,11 +1960,11 @@ from sklearn.inspection import permutation_importance
 
 ## Parte 16 — Evaluación final sobre el conjunto de prueba (Pasos 62–63)
 
-> **Teoría — abrir el conjunto de prueba una sola vez.** Todo lo anterior se decidió con el entrenamiento. Ahora se entrena el modelo **elegido** (con sus hiperparámetros y su umbral) con *todo* `X_train` y se evalúa **una vez** en `X_test`. Si el resultado te decepciona, **no** vuelvas atrás a "arreglarlo" mirando el conjunto de prueba: documenta el resultado tal cual.
+> **Teoría — abrir el conjunto de prueba una sola vez.** Todo lo anterior se decidió con el entrenamiento. Ahora se entrena el modelo **elegido** (con sus hiperparámetros y su umbral) con *todo* `X_train` y se evalúa **una vez** en `X_test`. Si el resultado te decepciona, **no** vuelvas atrás a "arreglarlo" mirando el conjunto de prueba: documenta el resultado tal cual. En este proyecto esa puerta es `make holdout`: guarda `reports/evaluacion_prueba.json` y las demás etapas solo lo leen, verificando huellas.
 
 ### Paso 62. Evaluar en prueba con incertidumbre
 
-**Dónde:** `evaluate_on_test(pipeline, X_test, y_test, threshold)` y cuaderno.
+**Dónde:** `evaluate_on_test(pipeline, X_test, y_test, threshold)`, `evaluate_test_with_ci()` y `flows/08_holdout_evaluation.py`. El cuaderno **lee** el artefacto; no vuelve a calcular la métrica.
 ```python
 def evaluate_on_test(pipeline, X_test, y_test, threshold: float = 0.5) -> dict:
     """Devuelve exactitud, F1, ROC-AUC y el tamaño de la prueba (dict serializable a JSON)."""
@@ -1972,10 +1972,11 @@ def evaluate_on_test(pipeline, X_test, y_test, threshold: float = 0.5) -> dict:
     raise NotImplementedError
 ```
 ```python
+# make holdout (una vez): entrena con 712, llama a evaluate_test_with_ci y congela el JSON.
 # Cuaderno:
-# 1. Ajusta el finalista con (X_train, y_train) y llama a evaluate_on_test UNA vez.
-# 2. Intervalo de confianza por bootstrap: remuestrea (con reemplazo) los pares (y_test, proba)
-#    1000 veces, calcula la métrica en cada remuestreo y toma los percentiles 2.5 y 97.5.
+# 1. ho.load_holdout() lee las métricas y probabilidades congeladas; no hay llamada a evaluate_on_test.
+# 2. El intervalo de confianza por bootstrap se calculó al congelar: 1000 remuestreos de (y_test, proba),
+#    percentiles 2.5 y 97.5.
 # 3. Con ~180 pasajeros de prueba, ¿qué tan ancho es el intervalo? ¿Qué implica para comparar modelos?
 ```
 
@@ -2114,14 +2115,15 @@ def test_predict_returns_probabilities_and_labels(toy):
 
 **Dónde:** `run()` de `flows/05_ml_models.py`; el orden lo da `job.py`.
 ```python
-def run(in_dir: Path | None = None, models_dir: Path = MODELS) -> Path:
-    """Silver -> evaluación honesta -> modelo final entrenado y guardado."""
-    # 1. X, y = load_dataset(in_dir / SILVER_NAME si in_dir, o el valor por defecto)
-    # 2. X_tr, X_te, y_tr, y_te = split(X, y)
-    # 3. Evaluación: pipe_eval = train_final(X_tr, y_tr); metrics = evaluate_on_test(pipe_eval, X_te, y_te, THRESHOLD)
-    #    log.info con las métricas (esta es la estimación que se reporta).
-    # 4. Modelo definitivo: pipeline = train_final(X, y)    # con TODOS los datos etiquetados
-    # 5. save_model(pipeline, metadata, models_dir=models_dir) con los metadatos del Paso 66.
+def run(in_dir: Path | None = None, models_dir: Path = MODELS,
+        holdout_path: Path | None = None) -> Path:
+    """Silver -> métrica congelada -> modelo final entrenado y guardado."""
+    # 1. X, y = load_dataset(...); data_sha = sha256_of(datos)
+    # 2. holdout = ho.load_holdout(path=holdout_path, data_sha256=data_sha)
+    #    (falla si no existe o cambiaron datos/decisiones: NUNCA reevalúa aquí)
+    # 3. metrics = holdout['metricas']  # estimación reportada, evaluada por make holdout
+    # 4. Modelo definitivo: pipeline = train_final(X, y)  # con TODOS los datos etiquetados
+    # 5. save_model(pipeline, metadata, models_dir=models_dir), con holdout_sha256 en los metadatos.
     # 6. Devuelve la ruta del modelo.
     raise NotImplementedError
 ```
@@ -2132,7 +2134,7 @@ git clone <tu-repositorio> && cd template_dsai
 python -m venv .venv && source .venv/bin/activate
 make install
 make test         # todas las pruebas en verde
-make pipeline     # ingesta -> silver -> gold -> modelo guardado
+make pipeline     # ingesta -> silver -> gold -> modelo guardado (métrica del holdout versionado)
 ls data/bronze data/silver data/gold models
 ```
 
@@ -2159,11 +2161,12 @@ El cierre del proyecto añade tres entregables que **no sustituyen** la evaluaci
 
 | Comando | Resultado versionado | Qué demuestra |
 |---|---|---|
+| `make holdout` | `reports/evaluacion_prueba.json` | Evaluación única de los 179: métricas, IC, probabilidades y huellas. Las corridas posteriores solo verifican el artefacto. |
 | `make notebooks` | `reports/ejecutados/*.ejecutado.ipynb` | Los cuadernos corrieron de arriba abajo: salidas y números de ejecución persistentes, sin modificar los originales limpios de `notebooks/`. |
 | `make figuras` | `reports/figuras/*.png`, `reports/validacion_grafica.md` | Tasas con IC 95 %, efecto de la imputación, ROC/PR, calibración y matriz de confusión sobre predicciones **OOF**. La prueba de 179 no se reabre. |
 | `make validar-externa` | `reports/validacion_externa.md`, `.json` y 3 PNG | Deriva (PSI, KS, TVD) de los 418 pasajeros sin etiqueta frente a los 891 etiquetados, y distribución de sus predicciones. |
 
-`flows/06_external_validation.py` reutiliza las transformaciones puras de `01_data_engineering.py` y el pipeline guardado: la imputación se aprende en entrenamiento, nunca en la cohorte nueva. `07_report_figures.py` regenera las imágenes desde artefactos, en lugar de pegar capturas manuales que quedan obsoletas.
+`flows/06_external_validation.py` reutiliza las transformaciones puras de `01_data_engineering.py` y el pipeline guardado: la imputación se aprende en entrenamiento, nunca en la cohorte nueva. Las probabilidades de la «prueba honesta» que compara vienen del artefacto congelado, no de un reentrenamiento. `07_report_figures.py` regenera las imágenes desde artefactos, en lugar de pegar capturas manuales que quedan obsoletas.
 
 > **Límite que no hay que cruzar.** La cohorte externa no tiene `Survived`: no hay exactitud, recall ni AUC que reportar, y **no** se ajusta el modelo contra ella. Es monitorización de deriva, no validación de desempeño; para medir desempeño hacen falta etiquetas nuevas. Los umbrales PSI/TVD 0,10 y 0,20 son una heurística de cribado, no una verdad estadística.
 
@@ -2174,7 +2177,7 @@ El cierre del proyecto añade tres entregables que **no sustituyen** la evaluaci
 - [ ] No hay rutas absolutas, credenciales ni datos/modelos en Git (`git status` limpio de `data/`, `models/`).
 - [ ] Los cuadernos corren de arriba abajo (*Restart & Run All*) y no contienen lógica productiva.
 - [ ] `reports/conclusiones_eda.md`, `reports/problema_ml.md` y `reports/model_card.md` están completos y distinguen asociación de causalidad.
-- [ ] El conjunto de prueba se usó **una sola vez** y las métricas finales incluyen su incertidumbre.
+- [ ] `make holdout` generó `reports/evaluacion_prueba.json` una sola vez; `make pipeline`, `make informes` y el cuaderno solo lo leen y las métricas finales incluyen su incertidumbre.
 - [ ] `make notebooks` produjo copias ejecutadas en `reports/ejecutados/` y los originales siguen limpios.
 - [ ] `make figuras` y `make validar-externa` regeneraron `reports/validacion_grafica.md` y `reports/validacion_externa.md` con sus figuras; la deriva se interpreta sin inventar métricas sobre datos sin etiqueta.
 - [ ] El historial de *commits* cuenta la historia del proyecto (un cambio por *commit*, mensajes que explican el porqué).

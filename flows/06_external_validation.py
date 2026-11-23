@@ -30,10 +30,13 @@ from flows.common.paths import (
     MODELS,
     REPORTS,
     ROOT,
+    SILVER,
+    SILVER_NAME,
 )
 
 ml = importlib.import_module("flows.05_ml_models")
 de = importlib.import_module("flows.01_data_engineering")
+ho = importlib.import_module("flows.08_holdout_evaluation")
 
 log = get_logger(__name__)
 
@@ -173,18 +176,27 @@ def categorical_drift(X_ref: pd.DataFrame, X_ext: pd.DataFrame) -> dict[str, dic
 
 def prediction_drift(
     pipeline, X_ext: pd.DataFrame, X_ref: pd.DataFrame, y_ref: pd.Series,
-    threshold: float,
+    threshold: float, probas_prueba: list[float] | None = None,
 ) -> dict:
     """Distribución de predicciones: cohorte externa vs. prueba honesta (179).
 
-    La referencia es un modelo reentrenado solo con los 712 de entrenamiento y
-    evaluado en los 179 de prueba: así no se usa la cohorte externa ni se reabre
-    la métrica final. Las probabilidades del modelo definitivo sobre los 891 se
-    incluyen solo como contexto in-sample (optimista).
+    La referencia son las probabilidades **congeladas** por `make holdout`
+    (modelo entrenado solo con los 712 y evaluado una vez en los 179). Este
+    informe no reentrena ni reabre la prueba: si no se pasan las probabilidades,
+    se leen del artefacto versionado. Las probabilidades del modelo definitivo
+    sobre los 891 se incluyen solo como contexto in-sample (optimista).
     """
-    X_tr, X_te, y_tr, _ = ml.split(X_ref, y_ref)
-    pipe_eval = ml.train_final(X_tr, y_tr)
-    honest = ml.predict(pipe_eval, X_te, threshold)
+    if probas_prueba is None:
+        probas_prueba = ho.load_holdout(
+            data_sha256=sha256_of(SILVER / SILVER_NAME)
+        )["probas_prueba"]
+    scores = np.asarray(probas_prueba, dtype=float)
+    if scores.ndim != 1 or len(scores) == 0:
+        raise ValueError("probas_prueba debe ser una secuencia no vacía de probabilidades")
+    honest = pd.DataFrame({
+        "proba_survive": scores,
+        "pred": (scores >= threshold).astype(int),
+    })
     external = ml.predict(pipeline, X_ext, threshold)
     in_sample = ml.predict(pipeline, X_ref, threshold)
     return {
@@ -292,8 +304,9 @@ def write_report(
         "cohorte nueva a la de entrenamiento en sus entradas y en las predicciones?"),
         "",
         ("Referencia: 891 pasajeros etiquetados de Silver. Las probabilidades de "
-        f"«prueba honesta» vienen de un modelo reentrenado con 712 pasajeros y "
-        f"evaluado en los {preds['n_prueba']} de prueba (sin retoques). La columna "
+        "«prueba honesta» están **congeladas** en `evaluacion_prueba.json` (evaluación "
+        f"única sobre 712 entrenamiento y {preds['n_prueba']} prueba, hecha por `make "
+        "holdout`); este informe no las recalcula ni reabre la métrica final. La columna "
         "«in-sample» usa el modelo definitivo sobre los 891 y es optimista: solo contexto."),
         "",
         "## Variables numéricas",
@@ -396,13 +409,19 @@ def run(
     X_ext = prepare_features(raw)
     X_ref, y_ref = ml.load_dataset()
 
+    holdout = ho.load_holdout(data_sha256=sha256_of(SILVER / SILVER_NAME))
     numeric = numeric_drift(X_ref, X_ext)
     for col in NUMERIC_FEATURES:
         numeric[col]["valores_ref"] = X_ref[col].dropna().tolist()
         numeric[col]["valores_ext"] = X_ext[col].dropna().tolist()
     categorical = categorical_drift(X_ref, X_ext)
-    preds = prediction_drift(pipeline, X_ext, X_ref, y_ref,
-                             float(meta.get("threshold", ml.THRESHOLD)))
+    preds = prediction_drift(
+        pipeline, X_ext, X_ref, y_ref,
+        float(meta.get("threshold", ml.THRESHOLD)),
+        probas_prueba=holdout["probas_prueba"],
+    )
+    if preds["n_prueba"] != holdout["metricas"]["n_test"]:
+        raise RuntimeError("El artefacto de prueba y la evaluación congelada no coinciden")
 
     figures = make_figures(numeric, categorical, preds, fig_dir)
 
@@ -419,6 +438,12 @@ def run(
         "sha256_fuente": sha256_of(source),
         "modelo": _display_path(model_file),
         "sha256_modelo": meta["model_sha256"],
+        "holdout": {
+            "archivo": holdout["archivo"],
+            "sha256": holdout["integridad_sha256"],
+            "generado_at": holdout["generado_at"],
+            "n_prueba": preds["n_prueba"],
+        },
         "umbrales_senal": {"estable_max": STABLE_MAX, "moderada_max": MODERATE_MAX},
         "numericas": serializable,
         "categoricas": categorical,

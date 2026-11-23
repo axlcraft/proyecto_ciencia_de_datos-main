@@ -1,4 +1,4 @@
-.PHONY: install ingest silver gold train pipeline test lint clean \
+.PHONY: install ingest silver gold holdout train pipeline test lint clean \
 	notebooks validar-externa figuras informes
 
 install:
@@ -12,6 +12,9 @@ silver:
 
 gold:
 	python -m flows.job --stage gold
+
+holdout:
+	python -m flows.08_holdout_evaluation
 
 train:
 	python -m flows.job --stage train

@@ -34,7 +34,8 @@ y `reports/` (ignorados por Git).
 | `make ingest` | Descarga el CSV y lo guarda tal cual en `data/bronze/` |
 | `make silver` | Valida, limpia y enriquece los datos en `data/silver/` |
 | `make gold` | Genera tablas agregadas en `data/gold/` |
-| `make train` | Evalúa y guarda `models/titanic_model_v1.joblib` con sus metadatos |
+| `make holdout` | Ejecuta **una sola vez** la evaluación de los 179 pasajeros y congela `reports/evaluacion_prueba.json`; corridas posteriores solo verifican su integridad |
+| `make train` | Guarda `models/titanic_model_v1.joblib` con metadatos; consume la métrica congelada, sin reabrir la prueba |
 | `make pipeline` | Ejecuta todas las etapas anteriores |
 | `make notebooks` | Ejecuta los cuadernos y guarda copias con salidas en `reports/ejecutados/` (los originales quedan limpios) |
 | `make figuras` | Genera `reports/figuras/*.png` y `reports/validacion_grafica.md` desde Silver y el pipeline congelado |
@@ -44,10 +45,15 @@ y `reports/` (ignorados por Git).
 | `make lint` | Ejecuta ruff |
 | `make clean` | Borra datos generados y cachés |
 
+> **Sobre el conjunto de prueba:** `make holdout` es la única puerta que lo abre. Guarda métricas,
+> intervalos y probabilidades en `reports/evaluacion_prueba.json` (versionado); `make pipeline`,
+> `make informes` y `make notebooks` solo leen ese artefacto y validan sus huellas. Si cambian los
+> datos o las decisiones del modelo, fallan en lugar de reevaluar en silencio.
+
 > **Sobre la validación externa:** los 418 pasajeros de Bronze no están etiquetados, así que solo
 > permite vigilar deriva de covariables y de predicciones. **No** se calculan accuracy ni ROC-AUC y
-> **no** se reabre el conjunto de prueba. Las figuras y los informes sí se versionan (excepciones en
-> `.gitignore`); los datos, modelos y el resto de derivados siguen ignorados.
+> **no** se reabre el conjunto de prueba. Las figuras, los informes y el artefacto de prueba sí se
+> versionan (excepciones en `.gitignore`); los datos, modelos y el resto de derivados siguen ignorados.
 
 ## Estructura
 
@@ -59,6 +65,7 @@ flows/03_aggregation.py        Silver -> Gold (tablas para el informe)
 flows/05_ml_models.py          Silver -> modelo guardado con metadatos
 flows/06_external_validation.py  418 sin etiqueta -> informe de deriva
 flows/07_report_figures.py     Silver + pipeline -> figuras de validación gráfica
+flows/08_holdout_evaluation.py evaluación única -> evaluacion_prueba.json (congelada)
 flows/job.py                   orquestador de etapas
 notebooks/                     exploración (sin lógica productiva, sin salidas)
 tests/                         pruebas unitarias de cada módulo

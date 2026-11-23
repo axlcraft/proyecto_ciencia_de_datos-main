@@ -163,7 +163,7 @@ template_dsai/
 4. En el cuaderno, **reinicia y ejecuta todo** (*Restart & Run All*) y haz el análisis visual leyendo `data/silver/…`.
 5. Haz un *commit* pequeño con un mensaje que diga qué decisión tomaste y por qué.
 
-> **Reglas para los cuadernos.** No contienen lógica productiva: si una celda calcula algo que otro módulo necesitará, se mueve a `flows/`. Siempre importan rutas desde `flows.common.paths` (nunca `C:\...` ni `/home/...`) y deben ejecutarse de arriba abajo sin errores. Limpia las salidas antes del *commit* (`nbstripout`).
+> **Reglas para los cuadernos.** No contienen lógica productiva: si una celda calcula algo que otro módulo necesitará, se mueve a `flows/`. Siempre importan rutas desde `flows.common.paths` (nunca `C:\...` ni `/home/...`) y deben ejecutarse de arriba abajo sin errores. Limpia las salidas antes del *commit* (`nbstripout`). Si quieres conservar la evidencia de una ejecución, **no la guardes dentro de `notebooks/`**: usa `make notebooks`, que deja copias con salidas y `execution_count` en `reports/ejecutados/` sin tocar los originales.
 
 ---
 
@@ -2153,6 +2153,20 @@ nuevos = pd.read_csv(BRONZE / BRONZE_UNLABELED_NAME)
 
 **Ficha del modelo (`reports/model_card.md`).** Documento breve (una página) con: propósito y uso previsto, datos de entrenamiento (fuente, huella SHA-256, tamaño, periodo), variables usadas y excluidas, métricas de validación y de prueba **con su incertidumbre**, desempeño por subgrupos (Paso 54), limitaciones y usos no recomendados (Paso 63), versiones de Python/librerías y cómo reproducir (`make pipeline`).
 
+### Extensión — evidencia gráfica y validación externa (Taller 3)
+
+El cierre del proyecto añade tres entregables que **no sustituyen** la evaluación honesta ya descrita:
+
+| Comando | Resultado versionado | Qué demuestra |
+|---|---|---|
+| `make notebooks` | `reports/ejecutados/*.ejecutado.ipynb` | Los cuadernos corrieron de arriba abajo: salidas y números de ejecución persistentes, sin modificar los originales limpios de `notebooks/`. |
+| `make figuras` | `reports/figuras/*.png`, `reports/validacion_grafica.md` | Tasas con IC 95 %, efecto de la imputación, ROC/PR, calibración y matriz de confusión sobre predicciones **OOF**. La prueba de 179 no se reabre. |
+| `make validar-externa` | `reports/validacion_externa.md`, `.json` y 3 PNG | Deriva (PSI, KS, TVD) de los 418 pasajeros sin etiqueta frente a los 891 etiquetados, y distribución de sus predicciones. |
+
+`flows/06_external_validation.py` reutiliza las transformaciones puras de `01_data_engineering.py` y el pipeline guardado: la imputación se aprende en entrenamiento, nunca en la cohorte nueva. `07_report_figures.py` regenera las imágenes desde artefactos, en lugar de pegar capturas manuales que quedan obsoletas.
+
+> **Límite que no hay que cruzar.** La cohorte externa no tiene `Survived`: no hay exactitud, recall ni AUC que reportar, y **no** se ajusta el modelo contra ella. Es monitorización de deriva, no validación de desempeño; para medir desempeño hacen falta etiquetas nuevas. Los umbrales PSI/TVD 0,10 y 0,20 son una heurística de cribado, no una verdad estadística.
+
 ### Definición de terminado (lista de verificación final)
 
 - [ ] `make test` pasa completo y `make lint` no reporta errores.
@@ -2161,5 +2175,7 @@ nuevos = pd.read_csv(BRONZE / BRONZE_UNLABELED_NAME)
 - [ ] Los cuadernos corren de arriba abajo (*Restart & Run All*) y no contienen lógica productiva.
 - [ ] `reports/conclusiones_eda.md`, `reports/problema_ml.md` y `reports/model_card.md` están completos y distinguen asociación de causalidad.
 - [ ] El conjunto de prueba se usó **una sola vez** y las métricas finales incluyen su incertidumbre.
+- [ ] `make notebooks` produjo copias ejecutadas en `reports/ejecutados/` y los originales siguen limpios.
+- [ ] `make figuras` y `make validar-externa` regeneraron `reports/validacion_grafica.md` y `reports/validacion_externa.md` con sus figuras; la deriva se interpreta sin inventar métricas sobre datos sin etiqueta.
 - [ ] El historial de *commits* cuenta la historia del proyecto (un cambio por *commit*, mensajes que explican el porqué).
 

@@ -36,9 +36,18 @@ y `reports/` (ignorados por Git).
 | `make gold` | Genera tablas agregadas en `data/gold/` |
 | `make train` | Evalúa y guarda `models/titanic_model_v1.joblib` con sus metadatos |
 | `make pipeline` | Ejecuta todas las etapas anteriores |
+| `make notebooks` | Ejecuta los cuadernos y guarda copias con salidas en `reports/ejecutados/` (los originales quedan limpios) |
+| `make figuras` | Genera `reports/figuras/*.png` y `reports/validacion_grafica.md` desde Silver y el pipeline congelado |
+| `make validar-externa` | Puntúa los 418 pasajeros sin etiqueta y documenta la deriva en `reports/validacion_externa.md` (+ `.json`) |
+| `make informes` | Ejecuta `figuras` y `validar-externa` |
 | `make test` | Ejecuta pytest |
 | `make lint` | Ejecuta ruff |
 | `make clean` | Borra datos generados y cachés |
+
+> **Sobre la validación externa:** los 418 pasajeros de Bronze no están etiquetados, así que solo
+> permite vigilar deriva de covariables y de predicciones. **No** se calculan accuracy ni ROC-AUC y
+> **no** se reabre el conjunto de prueba. Las figuras y los informes sí se versionan (excepciones en
+> `.gitignore`); los datos, modelos y el resto de derivados siguen ignorados.
 
 ## Estructura
 
@@ -48,10 +57,12 @@ flows/00_ingestion.py          fuente -> Bronze (+ metadatos y reporte de calida
 flows/01_data_engineering.py   Bronze -> Silver (funciones puras encadenadas)
 flows/03_aggregation.py        Silver -> Gold (tablas para el informe)
 flows/05_ml_models.py          Silver -> modelo guardado con metadatos
+flows/06_external_validation.py  418 sin etiqueta -> informe de deriva
+flows/07_report_figures.py     Silver + pipeline -> figuras de validación gráfica
 flows/job.py                   orquestador de etapas
-notebooks/                     exploración (sin lógica productiva)
+notebooks/                     exploración (sin lógica productiva, sin salidas)
 tests/                         pruebas unitarias de cada módulo
-reports/                       informes y ficha del modelo (generados)
+reports/                       informes .md, .png y cuadernos ejecutados (versionados)
 data/, models/                 artefactos derivados (ignorados por Git)
 tareas/                        talleres anteriores, conservados como referencia
 ```

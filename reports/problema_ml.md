@@ -129,3 +129,13 @@ Precisión 0,800, recall 0,696, F1 0,744 (n = 179). Intervalos por bootstrap per
 
 `make pipeline` regenera Bronze, Silver, Gold y el modelo con semilla 42. La ficha del artefacto está en
 `reports/model_card.md`; los metadatos exactos, en `models/titanic_model_v1.metadata.json`.
+
+## 9. Evidencia gráfica y monitoreo posterior
+
+- [`validacion_grafica.md`](validacion_grafica.md): ROC/PR, calibración y matriz de confusión sobre
+  **712 predicciones fuera de pliegue**. Comprueban visualmente el AUC y el Brier de este informe
+  sin volver a tocar los 179 de prueba. Incluye además las figuras del EDA.
+- [`validacion_externa.md`](validacion_externa.md): deriva de los 418 pasajeros sin etiqueta frente
+  a los 891 etiquetados (PSI, KS, TVD y distribución de predicciones). Por falta de etiquetas
+  **no hay métrica de desempeño**: es monitorización, no una nueva evaluación del modelo.
+- Cuaderno ejecutado: `reports/ejecutados/04_modelado.ejecutado.ipynb`, con salidas persistentes.

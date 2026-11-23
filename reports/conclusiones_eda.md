@@ -75,3 +75,13 @@ Cuaderno reproducible: `notebooks/02_exploracion.ipynb`; tablas: `data/gold/`.
   recibe un servicio hoy. `Sex` y `Pclass` reproducen las reglas de evacuación de la época.
 
 La formulación del problema predictivo está en `reports/problema_ml.md`.
+
+## 5. Evidencia gráfica
+
+Las cifras de este informe se pueden contrastar visualmente en
+[`validacion_grafica.md`](validacion_grafica.md): tasas de supervivencia por género, clase y
+`Alone` con intervalos de confianza al 95 %, y el efecto de la imputación de edad sobre la
+distribución original. Las imágenes se regeneran con `make figuras` desde `data/silver/`; no son
+capturas manuales. El cuaderno ejecutado correspondiente está en
+`reports/ejecutados/02_exploracion.ejecutado.ipynb` (los originales de `notebooks/` se conservan
+limpios).

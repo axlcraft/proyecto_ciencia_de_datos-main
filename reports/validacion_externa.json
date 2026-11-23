@@ -1,0 +1,209 @@
+{
+  "generado_at": "2026-11-23T06:31:58.674365+00:00",
+  "tipo": "validacion_externa_no_supervisada",
+  "advertencia": "Sin etiquetas en la cohorte externa: no se calculan metricas de desempeno.",
+  "fuente": "data/bronze/titanic_unlabeled.csv",
+  "filas_externas": 418,
+  "sha256_fuente": "1f9d38185f8492afc2c7554204a2fe4686202918421173b288e38f9fc87c1578",
+  "modelo": "models/titanic_model_v1.joblib",
+  "sha256_modelo": "f8aa74fd2afcd154989d5fd62d6c2b83481ad1f5f525d7342f0a782a612c2fa9",
+  "umbrales_senal": {
+    "estable_max": 0.1,
+    "moderada_max": 0.2
+  },
+  "numericas": {
+    "Age": {
+      "n_ref": 714,
+      "n_externo": 332,
+      "media_ref": 29.69911764705882,
+      "media_externo": 30.272590361445783,
+      "mediana_ref": 28.0,
+      "mediana_externo": 27.0,
+      "missing_pct_ref": 19.865319865319865,
+      "missing_pct_externo": 20.574162679425836,
+      "psi": 0.04019005250003009,
+      "ks_stat": 0.045956936991664116,
+      "ks_p": 0.7023427077378919,
+      "senal": "estable"
+    },
+    "SibSp": {
+      "n_ref": 891,
+      "n_externo": 418,
+      "media_ref": 0.5230078563411896,
+      "media_externo": 0.4473684210526316,
+      "mediana_ref": 0.0,
+      "mediana_externo": 0.0,
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "psi": 0.00013127212435406504,
+      "ks_stat": 0.025311595487033878,
+      "ks_p": 0.9905968490976704,
+      "senal": "estable"
+    },
+    "Parch": {
+      "n_ref": 891,
+      "n_externo": 418,
+      "media_ref": 0.38159371492704824,
+      "media_externo": 0.3923444976076555,
+      "mediana_ref": 0.0,
+      "mediana_externo": 0.0,
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "psi": 0.0019277220983618688,
+      "ks_stat": 0.014176856282119288,
+      "ks_p": 0.9999999704869827,
+      "senal": "estable"
+    },
+    "Fare": {
+      "n_ref": 891,
+      "n_externo": 417,
+      "media_ref": 32.204207968574636,
+      "media_externo": 35.627188489208635,
+      "mediana_ref": 14.4542,
+      "mediana_externo": 14.4542,
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.23923444976076555,
+      "psi": 0.02688779437054117,
+      "ks_stat": 0.03937052378299377,
+      "ks_p": 0.7512564942991772,
+      "senal": "estable"
+    },
+    "Familia": {
+      "n_ref": 891,
+      "n_externo": 418,
+      "media_ref": 0.9046015712682379,
+      "media_externo": 0.8397129186602871,
+      "mediana_ref": 0.0,
+      "mediana_externo": 0.0,
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "psi": 0.008647780113344578,
+      "ks_stat": 0.021737846299249686,
+      "ks_p": 0.9988008167693302,
+      "senal": "estable"
+    }
+  },
+  "categoricas": {
+    "Pclass": {
+      "tvd": 0.029535117254415544,
+      "n_categorias_ref": 3,
+      "n_categorias_externo": 3,
+      "categorias_nuevas": [],
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "distribuciones": {
+        "ref": {
+          "3": 0.5510662177328844,
+          "1": 0.24242424242424243,
+          "2": 0.20650953984287318
+        },
+        "externo": {
+          "3": 0.5215311004784688,
+          "1": 0.25598086124401914,
+          "2": 0.22248803827751196
+        }
+      },
+      "senal": "estable"
+    },
+    "Sex": {
+      "tvd": 0.011223344556677922,
+      "n_categorias_ref": 2,
+      "n_categorias_externo": 2,
+      "categorias_nuevas": [],
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "distribuciones": {
+        "ref": {
+          "male": 0.6475869809203143,
+          "female": 0.35241301907968575
+        },
+        "externo": {
+          "male": 0.6363636363636364,
+          "female": 0.36363636363636365
+        }
+      },
+      "senal": "estable"
+    },
+    "Embarked": {
+      "tvd": 0.0790950440073247,
+      "n_categorias_ref": 3,
+      "n_categorias_externo": 3,
+      "categorias_nuevas": [],
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "distribuciones": {
+        "ref": {
+          "S": 0.7250280583613917,
+          "C": 0.18855218855218855,
+          "Q": 0.08641975308641975
+        },
+        "externo": {
+          "S": 0.645933014354067,
+          "C": 0.24401913875598086,
+          "Q": 0.11004784688995216
+        }
+      },
+      "senal": "estable"
+    },
+    "TTitulo": {
+      "tvd": 0.03210467245554968,
+      "n_categorias_ref": 4,
+      "n_categorias_externo": 4,
+      "categorias_nuevas": [],
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "distribuciones": {
+        "ref": {
+          "Mr": 0.6251402918069585,
+          "Miss": 0.20875420875420875,
+          "Mrs": 0.1425364758698092,
+          "Otro": 0.02356902356902357
+        },
+        "externo": {
+          "Mr": 0.6244019138755981,
+          "Miss": 0.18899521531100477,
+          "Mrs": 0.17464114832535885,
+          "Otro": 0.011961722488038277
+        }
+      },
+      "senal": "estable"
+    },
+    "Alone": {
+      "tvd": 0.0025695552011341383,
+      "n_categorias_ref": 2,
+      "n_categorias_externo": 2,
+      "categorias_nuevas": [],
+      "missing_pct_ref": 0.0,
+      "missing_pct_externo": 0.0,
+      "distribuciones": {
+        "ref": {
+          "Alone": 0.6026936026936027,
+          "with Family": 0.39730639730639733
+        },
+        "externo": {
+          "Alone": 0.6052631578947368,
+          "with Family": 0.39473684210526316
+        }
+      },
+      "senal": "estable"
+    }
+  },
+  "predicciones": {
+    "n_externo": 418,
+    "n_prueba": 179,
+    "threshold": 0.5,
+    "tasa_real_entrenamiento": 0.3838383838383838,
+    "probabilidad_media_externo": 0.40339982814204256,
+    "probabilidad_media_prueba": 0.3752818993251318,
+    "probabilidad_media_insample": 0.38379269017055867,
+    "tasa_positiva_externo": 0.37559808612440193,
+    "tasa_positiva_prueba": 0.33519553072625696,
+    "tasa_positiva_insample": 0.3445566778900112,
+    "n_nan": 0
+  },
+  "figuras": [
+    "reports/figuras/deriva_numerica.png",
+    "reports/figuras/deriva_categorica.png",
+    "reports/figuras/deriva_predicciones.png"
+  ]
+}

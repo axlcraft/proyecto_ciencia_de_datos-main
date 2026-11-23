@@ -89,3 +89,13 @@ Metadatos completos (fecha, versiones, hashes, parámetros y métricas):
 `models/titanic_model_v1.metadata.json`. Cuadernos: `notebooks/02_exploracion.ipynb` y
 `notebooks/04_modelado.ipynb`. Informes: `reports/conclusiones_eda.md` y `reports/problema_ml.md`.
 Prueba de humo (Paso 69): 418 pasajeros sin etiqueta predicen sin NaN ni errores (ver cuaderno 04).
+
+## Monitoreo posterior a la entrega
+
+La cohorte de 418 pasajeros sin etiqueta se puntúa de nuevo con el artefacto guardado en
+[`validacion_externa.md`](validacion_externa.md), que documenta la deriva de covariables y de
+probabilidades (PSI, KS, TVD) frente a los datos de entrenamiento. **No reporta accuracy ni AUC**:
+sin etiquetas no existen aciertos que medir, y la métrica de prueba de esta ficha no se recalcula.
+Las figuras de ROC/PR, calibración y confusión sobre predicciones OOF están en
+[`validacion_grafica.md`](validacion_grafica.md). Todo se regenera con `make informes`.
+

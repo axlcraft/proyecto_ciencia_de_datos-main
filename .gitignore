@@ -7,5 +7,11 @@ __pycache__/
 .env
 data/
 models/
-reports/
+reports/*
+!reports/*.md
+!reports/validacion_externa.json
+!reports/figuras/
+!reports/figuras/*.png
+!reports/ejecutados/
+!reports/ejecutados/*.ipynb
 *.log
